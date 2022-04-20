@@ -4,7 +4,7 @@ import pandas as pd
 import requests
 from datetime import date
 
-start_date = "2003-08-02"
+start_date = "2003-08-01"
 end_date = date.today()
 
 month_starts = pd.date_range(start=start_date, end=end_date, freq="MS")
@@ -15,8 +15,8 @@ headers = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36"
 }
 
+matches = []
 for month_end, month_start in zip(month_ends, month_starts):
-    matches = []
     response = session.post(
         "https://bet.hkjc.com/football/getJSON.aspx",
         headers=headers,
@@ -27,7 +27,10 @@ for month_end, month_start in zip(month_ends, month_starts):
             "pageno": 1,
         },
     )
-    data = json.loads(response.text)[0]
+    if text := json.loads(response.text):
+        data = text[0]
+    else:
+        continue
 
     matchescount = data["matchescount"]
 
@@ -45,7 +48,7 @@ for month_end, month_start in zip(month_ends, month_starts):
         if text := json.loads(response.text):
             data = text[0]
 
-        matches.append(data["matches"])
+        matches.extend(data["matches"])
 
-    df = pd.DataFrame(matches)
-    df.to_csv("matches.csv", index=False)
+df = pd.DataFrame(matches)
+df.to_csv("matches.csv", index=False)
